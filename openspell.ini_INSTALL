@@ -25,7 +25,7 @@ classes = spellService_classes.php
 
 [HowRU]
 ; default array for testing
-Word=Test
-Number=5
+word=Test
+number=5
 language=danish
 

@@ -9,9 +9,11 @@
 		<xs:complexType>
 			<xs:sequence>
 				<xs:element ref="spell:word"/>
-				<xs:element ref="spell:number"/>
-				<xs:element ref="spell:language"/>
-				<xs:element ref="spell:filter"/>
+				<xs:element ref="spell:number" minOccurs="0"/>
+				<xs:element ref="spell:language" minOccurs="0"/>
+				<xs:element ref="spell:filter" minOccurs="0"/>
+				<xs:element name="outputType" type="spell:output" minOccurs="0"/>
+				<xs:element ref="spell:callback" minOccurs="0"/>
 			</xs:sequence>
 		</xs:complexType>
 	</xs:element>
@@ -19,6 +21,7 @@
 		<xs:complexType>
 			<xs:sequence>
 				<xs:element ref="spell:term" minOccurs="0" maxOccurs="unbounded"/>
+				<xs:element ref="spell:error" minOccurs="0"/>
 			</xs:sequence>
 		</xs:complexType>
 	</xs:element>
@@ -36,4 +39,14 @@
 	<xs:element name="suggestion" type="xs:string"/>
 	<xs:element name="weight" type="xs:string"/>
 	<xs:element name="word" type="xs:string"/>
+	<xs:element name="error" type="xs:string"/>
+	<xs:element name="callback" type="xs:string"/>
+
+	<xs:simpleType name="output">
+	  <xs:restriction base="xs:string">
+	    <xs:enumeration value="XML"/>
+	    <xs:enumeration value="JSON"/>
+	  </xs:restriction>
+	</xs:simpleType>
+	  
 </xs:schema>

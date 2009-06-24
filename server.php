@@ -24,16 +24,8 @@ server for webservice to expose a simple version of Ankiro spellcheck. This scri
 based on php SOAP extension. 
 */
 
-// TODO : handle rest
-
-// disable caching of web service definitions while testing.
-// remove this line when in production
-ini_set('soap.wsdl_cache_enabled',0);
-
-// curl class for handling call to Ankiro spellcheck
+// curl class for handling remote calls to Ankiro spellcheck
 require_once('ws_lib/curl_class.php');
-// xml parser for mapping response from Ankiro to classmap
-require_once('response_parser.php');
 // timer 
 require_once('ws_lib/timer_class.php');
 // verbose
@@ -42,63 +34,97 @@ require_once('ws_lib/verbose_class.php');
 require_once("ws_lib/inifile_class.php");
 // xml-functions
 require_once("ws_lib/xml_func_class.php");
+// required for class-mapping
+require_once("spellService_classes.php");
 
+//echo "TESTHEST";
+$server=new openspell_server("openspell.ini");
+$server->handle_request();
 
-// get ini-file
-define(INIFILE, "openspell.ini");
-try{  $config = new inifile(INIFILE);
-}
-catch( exception $e )
+class openspell_server
 {
-  die("Cannot read " . INIFILE . " Exception: " . $e);
-}
+  private $config;
+  private $verbose;
+  private $watch;
 
-// prepare log-object
-$verbose = new verbose($config->get_value("logfile", "setup"), 
-                       $config->get_value("verbose", "setup"));
-
-// set constants for soap request
-define(WSDL, $config->get_value("wsdl", "setup"));
-define(CLASSES,$config->get_value("classes","setup"));
-
-// include for soap-classes
-require_once(CLASSES); 
-
-// check if request is made directly to servers HowRU-method ( testing )
-if( isset($_GET['HowRU']) )
+  public function  __construct($inifile)
   {
-    // make a request-object from config-file
-    $req=$config->get_section("HowRU");
-    $request = new SpellRequest();
-    $request->Word = $req['word'];
-    $request->Number = $req['number'];
-    $request->language = $req['language'];
-
-    //var_dump($request);
-    $met = new methods();
-    $response=$met->SpellCheck($request);
-    // var_dump($response);
-    if( !$response->error )
-      die('gr8');
-    else
-      die($response->error);
+    // initialize config and verbose objects
+    $this->config = new inifile($inifile);
     
+    if( $this->config->error )
+      {
+	die("Cannot read " . $inifile." Error: ".$this->config->error );
+      }
+
+    $this->verbose=new verbose($this->config->get_value("logfile", "setup"),
+			       $this->config->get_value("verbose", "setup")); 
+
+    
+    $this->watch = new stopwatch("", " ", "", "%s:%01.3f");
+    $this->watch->start('spellservice');
+  } 
+
+  public function __destruct()
+  {
+    // stop the watch
+    $this->watch->stop('spellservice');
+    // and do the logging
+    $this->verbose->log(TIMER, $this->watch->dump());
   }
 
-
-// time the operation
-$watch = new stopwatch("", " ", "", "%s:%01.3f");
-$watch->start('spellservice');
-
-// handle soap-request (post)
-if( isset($HTTP_RAW_POST_DATA) )
+  public function handle_request()
   {
+    if( isset($_GET["HowRU"]) )
+      {
+	$this->HowRU();
+	return;
+      }
+    elseif( isset($GLOBALS['HTTP_RAW_POST_DATA']) )
+      { 	
+	$this->soap_request(); 
+	return;
+      }       
+    elseif( !empty($_SERVER['QUERY_STRING']) )
+      {
+        $response = $this->rest_request();
+      }
+    else // no valid request was made; generate an error
+
+      {
+	$this->send_error();
+	return;
+      }
+
+  }
+
+  private function HowRU()
+  {
+    // get HowRU section from ini-file
+    $req = $this->config->get_section('HowRU');
+    $request = new spellRequest();
+    $request->word = $req['word'];
+    $request->number = $req['number'];
+    $request->language = $req['language'];
+
+    $met = new methods();
+    if( $response=$met->openSpell($request) )
+      {
+	if( !$response->error )
+	  die('gr8');
+      }
+    else
+      die("arrrgh: ".$met->error);    
+  }
+
+  private function soap_request()
+  {    
     $params = array(  
 		    "trace"=>true,
 		    "classmap"=>$classmap
 		      );
     
-    $wsdlpath = WSDL;
+    $wsdlpath = $this->config->get_value("wsdl","setup");
     try{
       $server = new SoapServer($wsdlpath,$params); 
     }
@@ -109,73 +135,120 @@ if( isset($HTTP_RAW_POST_DATA) )
     }   
     
     $server->setClass('methods');
-    $server->handle();       
-   
+    $server->handle();
   }
-else // postdata is not set, so this is probably a get-request
+
+  private function rest_request()
   {
-    $request = new SpellRequest();
-    if( isset($_GET['word']) )
-      $request->Word=$_GET['word'];
-    else // if a word is not set spellchecking is pointless
-      die( "Spellcheck needs a word to check" );
-    // rest of vars are given default values if not set
-    if( isset($_GET['number']) )
-      $request->Number=$_GET['number'];
-    else
-      $request->Number=5;
-    if( isset($_GET['language']) )
-      $request->language=$_GET['language'];
-    else
-      $request->language="danish";
-    if( isset($_GET['filter']) )
-      $request->filter=$_GET['filter']; 
-    else
-      $request->filter="asc";
-       
-
-    // make an object to handle request
-    $handler=new methods();
-    $response=$handler->openSpell($request);
-
-    if( isset($_GET['outputtype']) )
-      $type=$_GET['outputtype'];
-    else
-      $type="xml";
+    // get the query
+    $querystring =  $_SERVER['QUERY_STRING'];   
+    // set the request
+    $request = $this->map_url($querystring);
+    // get the response
+    $met = new methods();
+    $response = $met->openSpell($request);
     
-    switch($type)
+    /*handle the response*/
+
+    // set default outputType
+    $type = "xml"; 
+    if( !empty($request->outputType) )
+	$type = strtolower($request->outputType);
+
+    switch( $type )
       {
-      case "xml" :
+      case "xml":
+       	header('Content-type:text/xml;charset=UTF-8');
 	echo xml_func::object_to_xml($response);
 	break;
       case "json":
-	echo json_encode($response);
+	if( empty($request->callback) )
+	  echo json_encode($response);
+	else
+	  echo $request->callback." && ".$request->callback."(".json_encode($response).")";
 	break;
       default:
-        die();// this can not happen
-      }
-    
-    $watch->stop('spellservice');
-    // and do the logging
-    $verbose->log(TIMER, $watch->dump());
+	$error = "Please give me correct outputType; XML og JSON";
+	$this->send_error($error);
+	break;	    
+      }   
+
   }
 
-// handle rest-request (get)
+  /**
+   * Map given querystring to spellRequest-object
+   * @param querystring; the querystring from request-url
+   * @return spellRequest-object
+   */
+  private function map_url(&$querystring)
+  {       
+    if( empty($querystring) )
+      return false;
 
-/* initialize and return a SpellRequest-object from url-parameters */
-function get_request()
-{
-  
-  return null;
+    $request = new spellRequest();
+    
+    $parts=explode('&',$querystring);
+    foreach( $parts as $part )
+      {
+	$val=explode('=',$part);
+
+	if( $val[0] && $val[1] )
+	switch( $val[0] )
+	  {
+	  case "word":
+	    $request->word=$val[1];
+	    break;
+	  case "number":
+	    $request->number=$val[1];
+	    break;
+	  case "filter":
+	     $request->filter=$val[1];
+	    break;
+	  case "language":
+	     $request->language=$val[1];
+	    break;
+	  case "outputType":
+	     $request->outputType=$val[1];
+	    break;
+	  case "callback":
+	     $request->callback=$val[1];
+	    break;
+	    }
+      }
+    return $request;
+  }
+ 
+ /**
+   * Make a response with an error
+   * @param message; The message to send as error
+   * @return; echoes spellResponse-object as xml.
+   */
+  private function send_error($message=null)
+  {
+    // make a nice response to be polite
+    $response=new spellResponse();
+    // set default message
+    if( !isset($message) )
+      $message = "Please give me something to scan for like: ?word=hest";
+
+    $response->error =xml_func::UTF8($message);
+    // return message as xml
+    header('Content-type:text/xml;charset=UTF-8');
+    echo  xml_func::object_to_xml($response);   
+  }
+
 }
 
+/**
+ * Class containing spellcheck functions  
+ */
 class methods
 { 
-  public static $error;
+  public $error;
 
   public function methods()
   {
-    self::$error = null;
+    $this->error = null;
   }
 
   /*
@@ -191,35 +264,16 @@ class methods
 			  "url"=>"http://fillmore.dbc.dk/spellcheck.asmx");
   
  
+ 
   /** 
-      wrapper for functioncall to Ankiro spellcheck
-      params
-      $request: the soap request mapped to SpellRequest class      
-      @return: the soap response mapped to SpellResponse class
-   */
-  public function openSpell(SpellRequest $request)
-  {
-    global $verbose;
-    if( ! ($ret = $this->AnkiroSpellCheck($request)) ) 
-      {
-	// TODO log error with verbose
-	$verbose->log(WARNING,self::$error);
-	return new SoapFault("server",self::$error);
-      }
-
-    return $ret;
-  }  
-
-  /** 
-      make the spellcheck.
-      this method uses curl class to do the actual request to Ankiro spellcheck
-
-      params
-      $request: the soap request mapped to SpellRequest class
-      
-      @return: the soap response mapped to SpellResponse class
+   *   make the spellcheck.
+   *   this method uses curl class to do the actual request to Ankiro spellcheck
+   *
+   *   params
+   *   $request: the soap request mapped to SpellRequest class      
+   *   @return: the soap response mapped to SpellResponse class
   */
-  private function AnkiroSpellCheck($request)
+  public function openSpell(spellRequest $request)
   {
     $curl=new curl();
     $curl->set_url($this->defaults["url"]);
@@ -229,24 +283,30 @@ class methods
     $curl->set_option(CURLOPT_POSTFIELDS,$this->getSoapBody($request));
       
     $ret=$curl->get();
-   
-    // check for errors
+    
     $status = $curl->get_status();
+  
     if( $status['error'] )
       {
-	self::$error=$status['error'];
+	$this->error=$status['error'];
 	return false;      
       }
+    if( $status['http_code']!= 200 )
+      {
+	$this->error="openSpell::224:Error from curl class: http-code: ".$status['http_code'];
+	return false;
+      }
+
     return $this->ParseResult($ret);
   } 
 
   /**
-     This method uses response_parser class to parse the xml from Ankiro spellcheck. 
-     response_parser class generates an object of SpellResponse type.
-
-     params:
-     $xml: the soap response from Ankiro spellcheck
-     return: response mapped to SpellResponse class
+   *  This method uses response_parser class to parse the xml from Ankiro spellcheck. 
+   *  response_parser class generates an object of SpellResponse type.
+   *
+   *  params:
+   *  $xml: the soap response from Ankiro spellcheck
+   *  return: response mapped to SpellResponse class
    */
   private function ParseResult(&$xml)
   {
@@ -256,12 +316,12 @@ class methods
     if( $parser )
       return $parser->response;
 
-    self::$error=$parser->error;
+    $this->error=$parser->error;
     return false;
   }
 
   /** 
-      returns the xml for making a soap request to Ankiro spellcheck
+   *   returns the xml for making a soap request to Ankiro spellcheck
    */
   private function getSoapBody($request=null)
   {
@@ -289,7 +349,7 @@ xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
   }
 
   /** 
-      return an appropiate header for the curl class to make a soap request to Ankiro spellcheck
+   *   return an appropiate header for the curl class to make a soap request to Ankiro spellcheck
   */
   private function getSoapHeader()
   {
@@ -300,4 +360,53 @@ xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
   }
 }
 
+/**
+ * VERY simple class to parse response from Ankiro spellcheck
+ */
+class spellcheck_parser
+{
+  private $dom;
+  public $response;
+  public $error;
+
+  public function  __construct($xml)
+  {
+    $this->dom=new DOMDocument();
+    if( !$this->dom->loadXML($xml) )
+      {
+	//echo "FJEL OG MNAGLER";
+	$this->error[]="SPELLCHECK_PARSER: could not load xml";
+      }
+
+    if( $this->error )
+      return false;
+
+    $this->response = new SpellResponse();
+
+    $this->parse();
+  }
+
+  private function parse()
+  {
+    // get all suggestions
+    $nodeList = $this->dom->getElementsByTagName("Suggestion");
+    foreach( $nodeList as $node )
+      {
+	$this->response->term[]=$this->getTerm($node);
+      }
+     //  echo $this->dom->saveXML();
+  }
+
+  private function getTerm($node)
+  {
+    $term = new term();
+    $term->suggestion=$node->getAttribute("word");
+    $term->weight=$node->getAttribute("weight");
+    return $term;    
+  }
+}
+
+
 ?>
+
+
