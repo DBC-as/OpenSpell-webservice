@@ -144,6 +144,8 @@ class openspell_server
     $querystring =  $_SERVER['QUERY_STRING'];   
     // set the request
     $request = $this->map_url($querystring);
+    // set default values
+    $this->set_default($request);
     // get the response
     $met = new methods();
     $response = $met->openSpell($request);
@@ -174,6 +176,16 @@ class openspell_server
       }   
 
   }
+
+  private function set_default(spellRequest $request)
+  {
+    if( empty($request->number) )
+      $request->number=5;
+    if( empty($request->language) )
+      $request->language="danish";
+    if( empty($request->filter) )
+      $request->filter="asc";
+  } 
 
   /**
    * Map given querystring to spellRequest-object
@@ -280,23 +292,23 @@ class methods
 
     $curl->set_option(CURLOPT_HTTPHEADER, $this->getSoapHeader());
     $curl->set_option(CURLOPT_POST, 1);
-    $curl->set_option(CURLOPT_POSTFIELDS,$this->getSoapBody($request));
-      
+    $curl->set_option(CURLOPT_POSTFIELDS,$this->getSoapBody($request));    
+
     $ret=$curl->get();
-    
+
     $status = $curl->get_status();
-  
     if( $status['error'] )
       {
 	$this->error=$status['error'];
 	return false;      
       }
+
     if( $status['http_code']!= 200 )
       {
 	$this->error="openSpell::224:Error from curl class: http-code: ".$status['http_code'];
 	return false;
       }
-
+    
     return $this->ParseResult($ret);
   } 
 
@@ -400,7 +412,7 @@ class spellcheck_parser
   private function getTerm($node)
   {
     $term = new term();
-    $term->suggestion=$node->getAttribute("word");
+    $term->suggestion=xml_func::UTF8($node->getAttribute("word"));
     $term->weight=$node->getAttribute("weight");
     return $term;    
   }
