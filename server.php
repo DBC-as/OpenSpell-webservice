@@ -90,10 +90,12 @@ class openspell_server
         $response = $this->rest_request();
       }
     else // no valid request was made; generate an error
-
       {
-	$this->send_error();
-	return;
+	Header( "HTTP/1.1 303 See Other" );
+	Header( "Location: example.php" ); 
+	exit;
+	//$this->send_error();
+	//return;
       }
 
   }
