@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="xsd_html.xsl"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:spell="http://oss.dbc.dk/ns/openspell" targetNamespace="http://oss.dbc.dk/ns/openspell" elementFormDefault="qualified">
+	<xs:annotation>
+		<xs:documentation xml:lang="eng">Openspell Service</xs:documentation>
+		<xs:documentation xml:lang="eng">This XML Schema describes the data and structure of data of the Opensearch spelling service.</xs:documentation>
+	</xs:annotation>
+	<xs:element name="spellRequest">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="spell:word"/>
+				<xs:element ref="spell:number"/>
+				<xs:element ref="spell:language"/>
+				<xs:element ref="spell:filter"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="spellResponse">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="spell:term" minOccurs="0" maxOccurs="unbounded"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="term">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="spell:suggestion"/>
+				<xs:element ref="spell:weight"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="filter" type="xs:string"/>
+	<xs:element name="language" type="xs:string"/>
+	<xs:element name="number" type="xs:integer"/>
+	<xs:element name="suggestion" type="xs:string"/>
+	<xs:element name="weight" type="xs:string"/>
+	<xs:element name="word" type="xs:string"/>
+</xs:schema>
