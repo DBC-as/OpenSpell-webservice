@@ -3,7 +3,7 @@ require_once("ws_lib/xml_func_class.php");
 require_once("ws_lib/webServiceServer_class.php");
 class spellServer extends webServiceServer
 {
-  function handle_spellRequest($params)
+  function openSpell($params)
   {
     $met = new methods($this->config,$this->verbose);
     $terms=$met->spell_check($params);
@@ -54,14 +54,16 @@ class methods
 
     $status = $curl->get_status();
     if( $status['error'] )        
-      {                           
-        echo $status['error'];
+      {
+	if( $verbose )
+	  $verbose->log($status['error']);
         return false;                 
       }                               
 
     if( $status['http_code']!= 200 )
-      {                             
-        $this->error="openSpell::224:Error from curl class: http-code: ".$status['http_code'];
+      {     
+	if( $verbose )
+	  $verbose->log("Error from curl class: http-code: ".$status['http_code']);
         return false;                                                                         
       }                                                                                       
                                                                                               
@@ -84,7 +86,9 @@ class methods
     if( $parser )      
       return $parser->term;
 
-    $this->error=$parser->error;
+    if( $verbose )
+      $verbose->log($parser->error);
+
     return false;               
   }                             
 

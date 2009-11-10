@@ -37,6 +37,9 @@ xmlns[dc] = http://purl.org/dc/elements/1.1/
 xmlns[spell] = http://oss.dbc.dk/ns/openspell
 xmlns[xs] = http://www.w3.org/2001/XMLSchema
 
+; actions
+soapAction[openSpell]=spellRequest
+
 [defaults]
 LCID=1030	                            
 MaxPermutations=2000                 
@@ -47,21 +50,21 @@ OutNormalization=ENormalizationIndex
 
 ; valid parameters for rest-request
 [rest]
-action[spellRequest][] = word
-action[spellRequest][] = number
-action[spellRequest][] = filter
-action[spellRequest][] = language
-action[spellRequest][] = outputType
+action[openSpell][] = word
+action[openSpell][] = number
+action[openSpell][] = filter
+action[openSpell][] = language
+action[openSpell][] = outputType
 
 [soapHeader]
 content="Content-Type: text/xml;charset=UTF-8";
 action="SOAPAction:http://www.ankiro.dk/AnkiroLanguageServices/Spellcheck/Spellcheck";
 
 
-[HowRU]
-; default array for testing
-Word=Test
-Number=5
-language=danish
+[howru]
+test[1]=openSpell&word=test&number=25
+error[1]=Error 1: Service failed
+preg_match[1]=<term><spell:suggestion>.*<\/spell:suggestion><spell:weight>.*<\/spell:weight><\/term>
+
 
 
