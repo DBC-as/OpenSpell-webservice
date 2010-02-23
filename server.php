@@ -3,17 +3,36 @@ require_once("ws_lib/xml_func_class.php");
 require_once("ws_lib/webServiceServer_class.php");
 class spellServer extends webServiceServer
 {
-  function openSpell($params)
+  public function openSpell($params)
   {
     $met = new methods($this->config,$this->verbose);
     $terms=$met->spell_check($params);
-    
+   
+    $response_xmlobj->spellResponse->_namespace="http://oss.dbc.dk/ns/openspell";    
     foreach( $terms as $term )
-      {
       $response_xmlobj->spellResponse->_value->term[]=$term;
-      }
 
     return $response_xmlobj;
+  }
+
+  /*  protected function create_sample_forms()
+  {
+    Header( "HTTP/1.1 303 See Other" );
+    Header( "Location: example.php" );
+    exit;
+    }*/
+
+    /** \brief Echos config-settings
+   *
+   */
+  public function show_info() 
+  {
+    echo "<pre>";
+    echo "version             " . $this->config->get_value("version", "setup") . "<br/>";
+    echo "log                 " . $this->config->get_value("logfile", "setup") . "<br/>";
+    echo "spellcheck          " . $this->config->get_value("spell_url", "setup") . "<br/>";
+    echo "</pre>";
+    die();
   }
   
 }
@@ -61,7 +80,7 @@ class methods
       }                               
 
     if( $status['http_code']!= 200 )
-      {     
+      {
 	if( $verbose )
 	  $verbose->log("Error from curl class: http-code: ".$status['http_code']);
         return false;                                                                         
@@ -81,7 +100,7 @@ class methods
   private function ParseResult(&$xml)                                                 
   {
     $parser = new spellcheck_parser($xml);                                            
-
+    
     // check for errors
     if( $parser )      
       return $parser->term;
@@ -109,7 +128,7 @@ xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
 <Spellcheck xmlns="http://www.ankiro.dk/AnkiroLanguageServices/Spellcheck">
         <Word>'.$params->word->_value.'</Word>                                    
         <LCID>'.$defaults["LCID"].'</LCID>                           
-        <ThesaurusFriendlyName>'.$request->language.'</ThesaurusFriendlyName>
+        <ThesaurusFriendlyName>'.$defaults['ThesaurusFriendlyName'].'</ThesaurusFriendlyName>
         <MaxNumSuggestions>'.$params->number->_value.'</MaxNumSuggestions>          
         <MaxPermutations>'.$defaults["MaxPermutations"].'</MaxPermutations>
         <MinWeight>'.$defaults["MinWeight"].'</MinWeight>                  
@@ -121,7 +140,7 @@ xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
 </soap:Envelope>';                                                                                             
 
     // echo trim($xml);
-    //exit;
+    //xit;
 
     return trim($xml);
   }                   
@@ -151,7 +170,6 @@ class spellcheck_parser
 
   public function  __construct($xml)
   {
-    //  echo $xml;
     $this->dom=new DOMDocument();
     if( !$this->dom->loadXML($xml) )
       {
@@ -177,6 +195,7 @@ class spellcheck_parser
 
   private function getTerm($node)
   {
+    $term->_namespace="http://oss.dbc.dk/ns/openspell";
     $term->_value->suggestion->_value=xml_func::UTF8($node->getAttribute("word"));
     $term->_value->suggestion->_namespace="http://oss.dbc.dk/ns/openspell";
     $term->_value->weight->_value=$node->getAttribute("weight");
