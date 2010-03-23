@@ -1,6 +1,6 @@
 <?php
-require_once("ws_lib/xml_func_class.php");
-require_once("ws_lib/webServiceServer_class.php");
+require_once("OLS_class_lib/xml_func_class.php");
+require_once("OLS_class_lib/webServiceServer_class.php");
 class spellServer extends webServiceServer
 {
   public function openSpell($params)
