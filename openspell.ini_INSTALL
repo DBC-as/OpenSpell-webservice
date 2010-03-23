@@ -1,7 +1,7 @@
 ; Inifile for spellservice
 
 [setup]
-version = 1.2
+version = 1.3
 
 ; wsdl for service
 wsdl = openspell.wsdl
@@ -44,6 +44,8 @@ logfile = /tmp/spellcheck.log
 ;   OCI     - oracle
 verbose = WARNING+ERROR+FATAL+STAT+TIMER+TRACE+DEBUG+Z3950+OCI
 
+; format for automatic timer dump %s is the soap-action used
+dump_timer = Spell
 
 ; prefixes and namespaces
 xmlns[xml] = http://www.w3.org/XML/1998/namespace
