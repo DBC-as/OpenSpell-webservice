@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ns1="http://oss.dbc.dk/ns/openspell"><SOAP-ENV:Body>
+<ns1:spellRequest>
+ <ns1:word>atlask</ns1:word>
+ <ns1:number>10</ns1:number>
+ <ns1:language>danish</ns1:language>
+ <ns1:filter>asc</ns1:filter>
+</ns1:spellRequest>
+</SOAP-ENV:Body></SOAP-ENV:Envelope>
