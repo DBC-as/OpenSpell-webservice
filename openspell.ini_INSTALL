@@ -1,19 +1,36 @@
 ; Inifile for spellservice
 
 [setup]
-; servicename
-servicename=openspell
+version = 1.3
+
 ; wsdl for service
 wsdl = openspell.wsdl
 
+; in_house_domain may use ?ShowInfo and use create_sample form
+;in_house_domain = .dbc.dk
+
+; set to TRUE to expose the create_sample form
+;show_samples = 1
+
+; validate
+;validate[soap_request] = soap.xsd
+;validate[request] = openspell.xsd
+;validate[response] = openspell.xsd
+
+; soapActions and their corresponding request structure
+; Can be found in the wsdl but is stated here for convenience
+soapAction[openSpell]=spellRequest
+
+
+; path to xml-examples
 xmldir = ./xml
 
 ; url for webservice
-ws_url = http://vision.dbc.dk/~pjo/OpenLibrary/OpenSpell/trunk/
+ws_url = http://someserver.dbc.dk/OpenSpell
 ; url for spellcheck
-spell_url=http://fillmore.dbc.dk/spellcheck.asmx
+spell_url=http://someserver.dbc.dk/spellcheck
 ; logfile for verbose output
-logfile = /tmp/nypunkt_pjo/spellcheck.log
+logfile = /tmp/spellcheck.log
 
 ; set verboselevel
 ;   WARNING - simple warnings
@@ -28,6 +45,7 @@ logfile = /tmp/nypunkt_pjo/spellcheck.log
 verbose = WARNING+ERROR+FATAL+STAT+TIMER+TRACE+DEBUG+Z3950+OCI
 
 
+; prefixes and namespaces
 xmlns[xml] = http://www.w3.org/XML/1998/namespace
 xmlns[tns] = http://oss.dbc.dk/ns/openspell_wsdl
 xmlns[types] = http://oss.dbc.dk/ns/openspell
@@ -37,8 +55,6 @@ xmlns[dc] = http://purl.org/dc/elements/1.1/
 xmlns[spell] = http://oss.dbc.dk/ns/openspell
 xmlns[xs] = http://www.w3.org/2001/XMLSchema
 
-; actions
-soapAction[openSpell]=spellRequest
 
 [defaults]
 LCID=1030	                            
@@ -55,11 +71,6 @@ action[openSpell][] = number
 action[openSpell][] = filter
 action[openSpell][] = language
 action[openSpell][] = outputType
-
-[soapHeader]
-content="Content-Type: text/xml;charset=UTF-8";
-action="SOAPAction:http://www.ankiro.dk/AnkiroLanguageServices/Spellcheck/Spellcheck";
-
 
 [howru]
 test[1]=openSpell&word=test&number=25
