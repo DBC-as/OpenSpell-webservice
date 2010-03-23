@@ -3,7 +3,7 @@
 <spell:spellRequest>
  <spell:word>atlask</spell:word>
  <spell:number>10</spell:number>
- <spell:language>danish</spell:language>
- <spell:filter>asc</spell:filter>
+ <spell:language></spell:language>
+ <spell:filter></spell:filter>
 </spell:spellRequest>
 </SOAP-ENV:Body></SOAP-ENV:Envelope>
