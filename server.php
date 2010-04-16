@@ -1,10 +1,33 @@
 <?php
+/**
+ *
+ * This file is part of Open Library System.
+ * Copyright © 2009, Dansk Bibliotekscenter a/s,
+ * Tempovej 7-11, DK-2750 Ballerup, Denmark. CVR: 15149043
+ *
+ * Open Library System is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Open Library System is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with Open Library System.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+
 require_once("OLS_class_lib/xml_func_class.php");
 require_once("OLS_class_lib/webServiceServer_class.php");
 class spellServer extends webServiceServer
 {
-  public function openSpell($params)
-  {
+  public function openSpell($params) {
+    if (!$this->aaa->has_right("openspell", 500))
+      die("authentication_error");
+
     $met = new methods($this->config,$this->verbose);
     $terms=$met->spell_check($params);
    
@@ -15,8 +38,7 @@ class spellServer extends webServiceServer
     return $response_xmlobj;
   }
 
-  /*  protected function create_sample_forms()
-  {
+  /*  protected function create_sample_forms() {
     Header( "HTTP/1.1 303 See Other" );
     Header( "Location: example.php" );
     exit;
@@ -25,8 +47,7 @@ class spellServer extends webServiceServer
     /** \brief Echos config-settings
    *
    */
-  public function show_info() 
-  {
+  public function show_info() {
     echo "<pre>";
     echo "version             " . $this->config->get_value("version", "setup") . "<br/>";
     echo "log                 " . $this->config->get_value("logfile", "setup") . "<br/>";
@@ -44,20 +65,17 @@ $server->handle_request();
 /**
  * Class containing spellcheck functions  
  */                                       
-class methods                             
-{                                         
+class methods {                                         
 
   private $verbose;
   private $config;
 
-  public function __construct($config,$verbose=null)
-  {
+  public function __construct($config,$verbose=null) {
     $this->verbose=$verbose;
     $this->config=$config;   
   }  
                       
-  public function spell_check($params)                              
-  {
+  public function spell_check($params) {
     
     $curl=new curl();   
 
@@ -72,20 +90,17 @@ class methods
     $ret=$curl->get();
 
     $status = $curl->get_status();
-    if( $status['error'] )        
-      {
-	if( $verbose )
-	  $verbose->log($status['error']);
-        return false;                 
-      }                               
+    if( $status['error'] ) {
+      if( $verbose )
+        $verbose->log($status['error']);
+      return false;                 
+    }                               
 
-    if( $status['http_code']!= 200 )
-      {
-	if( $verbose )
-	  $verbose->log("Error from curl class: http-code: ".$status['http_code']);
-        return false;                                                                         
-      }                                                                                       
-                                                                                              
+    if( $status['http_code']!= 200 ) {
+      if( $verbose )
+        $verbose->log("Error from curl class: http-code: ".$status['http_code']);
+      return false;
+    }                                                                                       
     return $this->ParseResult($ret);                                                          
   }                                                                                           
 
@@ -97,8 +112,7 @@ class methods
    *  $xml: the soap response from Ankiro spellcheck                                  
    *  return: response mapped to SpellResponse class                                  
    */                                                                                 
-  private function ParseResult(&$xml)                                                 
-  {
+  private function ParseResult(&$xml) {
     $parser = new spellcheck_parser($xml);                                            
     
     // check for errors
@@ -114,8 +128,7 @@ class methods
   /** 
    *   returns the xml for making a soap request to Ankiro spellcheck
    */                                                                
-  private function getSoapBody($params)                        
-  {
+  private function getSoapBody($params) {
       // get defaults from config
     $defaults = $this->config->get_section("defaults");
                     
@@ -148,8 +161,7 @@ xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
   /**
    *   return an appropiate header for the curl class to make a soap request to Ankiro spellcheck
   */
-  private function getSoapHeader()
-  {
+  private function getSoapHeader() {
     $head=array();
     $head[]="Content-Type: text/xml;charset=UTF-8";
     $head[]="SOAPAction:http://www.ankiro.dk/AnkiroLanguageServices/Spellcheck/Spellcheck";
@@ -162,20 +174,17 @@ xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
  * @xml; the xml to parse
  * @return; an array of terms
  */
-class spellcheck_parser
-{
+class spellcheck_parser {
   private $dom;
   public $term=array();
   public $error;
 
-  public function  __construct($xml)
-  {
+  public function  __construct($xml) {
     $this->dom=new DOMDocument();
-    if( !$this->dom->loadXML($xml) )
-      {
-        //echo "FJEL OG MNAGLER";
-        $this->error[]="SPELLCHECK_PARSER: could not load xml";
-      }
+    if( !$this->dom->loadXML($xml) ) {
+      //echo "FJEL OG MNAGLER";
+      $this->error[]="SPELLCHECK_PARSER: could not load xml";
+    }
 
     if( $this->error )
       return false;
@@ -183,18 +192,15 @@ class spellcheck_parser
     $this->parse();
   }
 
-  private function parse()
-  {
+  private function parse() {
     // get all suggestions
     $nodeList = $this->dom->getElementsByTagName("Suggestion");
-    foreach( $nodeList as $node )
-      {
-        $this->term[]=$this->getTerm($node);
-      }
+    foreach( $nodeList as $node ) {
+      $this->term[]=$this->getTerm($node);
+    }
   }
 
-  private function getTerm($node)
-  {
+  private function getTerm($node) {
     $term->_namespace="http://oss.dbc.dk/ns/openspell";
     $term->_value->suggestion->_value=xml_func::UTF8($node->getAttribute("word"));
     $term->_value->suggestion->_namespace="http://oss.dbc.dk/ns/openspell";
