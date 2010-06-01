@@ -8,45 +8,47 @@
 	<xs:element name="spellRequest">
 		<xs:complexType>
 			<xs:sequence>
-        <xs:element ref="spell:authentication" minOccurs="0"/>
+				<xs:element ref="spell:authentication" minOccurs="0"/>
 				<xs:element ref="spell:word"/>
 				<xs:element ref="spell:number"/>
 				<xs:element ref="spell:language"/>
 				<xs:element ref="spell:filter"/>
-        <xs:element ref="spell:callback" minOccurs="0"/>
-        <xs:element ref="spell:outputType" minOccurs="0"/>
+				<xs:element ref="spell:callback" minOccurs="0"/>
+				<xs:element ref="spell:outputType" minOccurs="0"/>
 			</xs:sequence>
 		</xs:complexType>
 	</xs:element>
 	<xs:element name="spellResponse">
 		<xs:complexType>
-			<xs:sequence>
+			<xs:choice>
+				<xs:element ref="spell:error"/>
 				<xs:element ref="spell:term" minOccurs="0" maxOccurs="unbounded"/>
+			</xs:choice>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="authentication">
+		<xs:annotation>
+			<xs:documentation xml:lang="en">Parameters used for authentication purposes</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="spell:groupIdAut"/>
+				<xs:element ref="spell:passwordAut"/>
+				<xs:element ref="spell:userIdAut"/>
 			</xs:sequence>
 		</xs:complexType>
 	</xs:element>
-  <xs:element name="authentication">
-    <xs:annotation>
-      <xs:documentation xml:lang="en">Parameters used for authentication purposes</xs:documentation>
-    </xs:annotation>
-    <xs:complexType>
-      <xs:sequence>
-        <xs:element ref="spell:groupIdAut"/>
-        <xs:element ref="spell:passwordAut"/>
-        <xs:element ref="spell:userIdAut"/>
-      </xs:sequence>
-    </xs:complexType>
-  </xs:element>
-  <xs:element name="groupIdAut">
-    <xs:annotation>
-      <xs:documentation xml:lang="en">Identifier of the group (most often a library number) the user belongs to (for authentication purposes)</xs:documentation>
-    </xs:annotation>
-  </xs:element>
-  <xs:element name="passwordAut">
-    <xs:annotation>
-      <xs:documentation xml:lang="en">Password (for authentication purposes)</xs:documentation>
-    </xs:annotation>
-  </xs:element>
+	<xs:element name="error" type="spell:errorType"/>
+	<xs:element name="groupIdAut">
+		<xs:annotation>
+			<xs:documentation xml:lang="en">Identifier of the group (most often a library number) the user belongs to (for authentication purposes)</xs:documentation>
+		</xs:annotation>
+	</xs:element>
+	<xs:element name="passwordAut">
+		<xs:annotation>
+			<xs:documentation xml:lang="en">Password (for authentication purposes)</xs:documentation>
+		</xs:annotation>
+	</xs:element>
 	<xs:element name="term">
 		<xs:complexType>
 			<xs:sequence>
@@ -55,35 +57,41 @@
 			</xs:sequence>
 		</xs:complexType>
 	</xs:element>
-  <xs:element name="userIdAut">
-    <xs:annotation>
-      <xs:documentation xml:lang="en">User identifier (for authentication purposes)</xs:documentation>
-    </xs:annotation>
-  </xs:element>
-  <xs:element name="callback" type="xs:string">
-    <xs:annotation>
-      <xs:documentation xml:lang="en">If outputType=json.</xs:documentation>
-    </xs:annotation>
-  </xs:element>
-  <xs:element name="outputType" type="spell:outputTypeType">
-    <xs:annotation>
-      <xs:documentation xml:lang="en">Choice of output, default is XML.</xs:documentation>
-    </xs:annotation>
-  </xs:element>
+	<xs:element name="userIdAut">
+		<xs:annotation>
+			<xs:documentation xml:lang="en">User identifier (for authentication purposes)</xs:documentation>
+		</xs:annotation>
+	</xs:element>
+	<xs:element name="callback" type="xs:string">
+		<xs:annotation>
+			<xs:documentation xml:lang="en">If outputType=json.</xs:documentation>
+		</xs:annotation>
+	</xs:element>
+	<xs:element name="outputType" type="spell:outputTypeType">
+		<xs:annotation>
+			<xs:documentation xml:lang="en">Choice of output, default is XML.</xs:documentation>
+		</xs:annotation>
+	</xs:element>
 	<xs:element name="filter" type="xs:string"/>
 	<xs:element name="language" type="xs:string"/>
 	<xs:element name="number" type="xs:integer"/>
 	<xs:element name="suggestion" type="xs:string"/>
 	<xs:element name="weight" type="xs:string"/>
 	<xs:element name="word" type="xs:string"/>
-  <xs:simpleType name="outputTypeType">
-    <xs:annotation>
-      <xs:documentation xml:lang="en">The types of output that can be returned by the service.</xs:documentation>
-    </xs:annotation>
-    <xs:restriction base="xs:string">
-      <xs:enumeration value="xml"/>
-      <xs:enumeration value="json"/>
-      <xs:enumeration value="php"/>
-    </xs:restriction>
-  </xs:simpleType>
+   	<xs:simpleType name="errorType">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="authentication_error"/>
+			<xs:enumeration value="service_error"/>
+		</xs:restriction>
+	</xs:simpleType>	
+	<xs:simpleType name="outputTypeType">
+		<xs:annotation>
+			<xs:documentation xml:lang="en">The types of output that can be returned by the service.</xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="xml"/>
+			<xs:enumeration value="json"/>
+			<xs:enumeration value="php"/>
+		</xs:restriction>
+	</xs:simpleType>
 </xs:schema>
