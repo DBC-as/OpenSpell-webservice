@@ -39,12 +39,12 @@
 		</xs:complexType>
 	</xs:element>
 	<xs:element name="error" type="spell:errorType"/>
-	<xs:element name="groupIdAut">
+	<xs:element name="groupIdAut" type="xs:string">
 		<xs:annotation>
 			<xs:documentation xml:lang="en">Identifier of the group (most often a library number) the user belongs to (for authentication purposes)</xs:documentation>
 		</xs:annotation>
 	</xs:element>
-	<xs:element name="passwordAut">
+	<xs:element name="passwordAut" type="xs:string">
 		<xs:annotation>
 			<xs:documentation xml:lang="en">Password (for authentication purposes)</xs:documentation>
 		</xs:annotation>
@@ -57,7 +57,7 @@
 			</xs:sequence>
 		</xs:complexType>
 	</xs:element>
-	<xs:element name="userIdAut">
+	<xs:element name="userIdAut" type="xs:string">
 		<xs:annotation>
 			<xs:documentation xml:lang="en">User identifier (for authentication purposes)</xs:documentation>
 		</xs:annotation>
@@ -78,12 +78,12 @@
 	<xs:element name="suggestion" type="xs:string"/>
 	<xs:element name="weight" type="xs:string"/>
 	<xs:element name="word" type="xs:string"/>
-   	<xs:simpleType name="errorType">
+	<xs:simpleType name="errorType">
 		<xs:restriction base="xs:string">
 			<xs:enumeration value="authentication_error"/>
 			<xs:enumeration value="service_error"/>
 		</xs:restriction>
-	</xs:simpleType>	
+	</xs:simpleType>
 	<xs:simpleType name="outputTypeType">
 		<xs:annotation>
 			<xs:documentation xml:lang="en">The types of output that can be returned by the service.</xs:documentation>
