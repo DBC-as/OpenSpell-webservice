@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" xmlns:spell="http://oss.dbc.dk/ns/openspell"><SOAP-ENV:Body>
-<spell:spellRequest>
- <spell:word>atlask</spell:word>
- <spell:number>10</spell:number>
- <spell:language></spell:language>
- <spell:filter></spell:filter>
-</spell:spellRequest>
-</SOAP-ENV:Body></SOAP-ENV:Envelope>
